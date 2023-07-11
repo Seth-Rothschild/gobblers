@@ -181,7 +181,7 @@ def test_print():
     board.play("O", 1, 1, (0, 2))
     board.play("X", 3, 1, (0, 1))
 
-    output = board.print()
+    output = str(board)
 
     expected_output = ""
     expected_output += "   |XXX|   \n"
@@ -228,3 +228,65 @@ def test_win():
         with pytest.raises(ValueError) as e:
             board.play("X", 3, 0, (2, 1))
         assert str(e.value) == "The game is over"
+
+
+def test_reflections():
+    """We introduce a function board.reflect(i)
+    1. i an integer 0, 1, 2, or 3
+    2. the moveslist takes the reflection into account
+    """
+
+    board = Board()
+    board.play("X", 1, 0, (0, 0))
+
+    with pytest.raises(ValueError) as e:
+        board.reflect(4)
+    assert str(e.value) == "Reflection arg must be 0, 1, 2, or 3"
+
+    initial = board.moves
+
+    board.reflect(0)
+    assert board.moves == ["X-1-0-2-0"]
+    board.reflect(0)
+    assert board.moves == initial
+
+    board.reflect(1)
+    assert board.moves == ["X-1-0-0-0"]
+    board.reflect(1)
+    assert board.moves == initial
+
+    board.reflect(2)
+    assert board.moves == ["X-1-0-0-2"]
+    board.reflect(2)
+    assert board.moves == initial
+
+    board.reflect(3)
+    assert board.moves == ["X-1-0-2-2"]
+    board.reflect(3)
+    assert board.moves == initial
+
+
+def test_board_after_reflection():
+    """Make sure the pieces also move when we reflect the board."""
+    board = Board()
+    board.play("X", 1, 0, (0, 0))
+
+    board.reflect(0)
+    assert board.state[2][0][0].location == (2, 0)
+
+
+def test_replay():
+    """We occasionally want to generate a board from a list of moves"""
+    board = Board()
+    moves = ["X-1-0-0-0", "O-2-0-0-0"]
+
+    board.replay(moves)
+
+    assert board.moves == moves
+    assert board.state[0][0][1].player == "X"
+    assert board.state[0][0][1].covered == True
+    assert board.state[0][0][1].location == (0, 0)
+
+    assert board.state[0][0][0].player == "O"
+    assert board.state[0][0][0].covered == False
+    assert board.state[0][0][0].location == (0, 0)

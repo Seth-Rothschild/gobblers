@@ -22,37 +22,6 @@ class Board:
             raise ValueError("Move must end index 0 or 1")
         return self.find(player, size, index)
 
-    def validate_move(self, gobbler, location):
-        if gobbler.player != self.next_player:
-            raise ValueError("It is not {}'s turn".format(gobbler.player))
-
-        if len(location) != 2:
-            raise ValueError("Location must be a tupple of 2 integers between 0 and 2")
-
-        if gobbler.covered:
-            raise ValueError("This gobbler is covered and cannot move")
-
-        if self.game_over:
-            raise ValueError("The game is over")
-
-        x, y = location
-        if x not in [0, 1, 2] or y not in [0, 1, 2]:
-            raise ValueError("Location must be a tuple of 2 integers between 0 and 2")
-
-        if len(self.state[x][y]) > 0:
-            existing_gobbler = self.state[x][y][0]
-            can_eat = gobbler.can_eat(existing_gobbler)
-            if not can_eat:
-                raise ValueError(
-                    "{}-{} is occupied by a gobbler of the same size".format(x, y)
-                )
-
-    def find(self, player, size, index):
-        for piece in self.pieces:
-            if piece.player == player and piece.size == size and piece.index == index:
-                return piece
-        raise ValueError("No piece found", player, size, index)
-
     def _check_cover_and_uncover(self, gobbler, location):
         x, y = location
         if len(self.state[x][y]) > 0:
@@ -87,6 +56,37 @@ class Board:
                 self.game_over = True
                 self.winner = line[0]
 
+    def find(self, player, size, index):
+        for piece in self.pieces:
+            if piece.player == player and piece.size == size and piece.index == index:
+                return piece
+        raise ValueError("No piece found", player, size, index)
+
+    def validate_move(self, gobbler, location):
+        if gobbler.player != self.next_player:
+            raise ValueError("It is not {}'s turn".format(gobbler.player))
+
+        if len(location) != 2:
+            raise ValueError("Location must be a tupple of 2 integers between 0 and 2")
+
+        if gobbler.covered:
+            raise ValueError("This gobbler is covered and cannot move")
+
+        if self.game_over:
+            raise ValueError("The game is over")
+
+        x, y = location
+        if x not in [0, 1, 2] or y not in [0, 1, 2]:
+            raise ValueError("Location must be a tuple of 2 integers between 0 and 2")
+
+        if len(self.state[x][y]) > 0:
+            existing_gobbler = self.state[x][y][0]
+            can_eat = gobbler.can_eat(existing_gobbler)
+            if not can_eat:
+                raise ValueError(
+                    "{}-{} is occupied by a gobbler of the same size".format(x, y)
+                )
+
     def play(self, player, size, index, location):
         gobbler = self._parse_move(player, size, index)
         self.validate_move(gobbler, location)
@@ -103,7 +103,34 @@ class Board:
         self._check_win()
         gobbler.location = location
 
-    def print(self):
+    def _reflect_move(self, move, type):
+        player, size, index, x, y = move.split("-")
+        if type == 0:
+            x = str(2 - int(x))
+        if type == 1:
+            x, y = y, x
+        if type == 2:
+            y = str(2 - int(y))
+        if type == 3:
+            x = str(2 - int(x))
+            y = str(2 - int(y))
+            x, y = y, x
+        return "-".join([player, size, index, x, y])
+
+    def reflect(self, type):
+        if type not in [0, 1, 2, 3]:
+            raise ValueError("Reflection arg must be 0, 1, 2, or 3")
+        new_moves = [self._reflect_move(move, type) for move in self.moves]
+
+        self.replay(new_moves)
+
+    def replay(self, moves):
+        self.__init__()
+        for move in moves:
+            player, size, index, x, y = move.split("-")
+            self.play(player, int(size), int(index), (int(x), int(y)))
+
+    def __str__(self):
         """
         example output
            |   |
