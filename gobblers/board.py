@@ -1,6 +1,3 @@
-from typing import Any
-
-
 class Board:
     def __init__(self):
         self.state = [[[] for _ in range(3)] for _ in range(3)]
@@ -16,12 +13,14 @@ class Board:
                 self.pieces.append(Gobbler(player, size, 0))
                 self.pieces.append(Gobbler(player, size, 1))
 
-    def _parse_move(self, move):
-        if move[-1] not in ["0", "1"]:
-            raise ValueError("Move must end index 0 or 1")
-        if move[0] not in ["X", "O"]:
+    def _parse_move(self, player, size, index):
+        if player not in ["X", "O"]:
             raise ValueError("Move must start with player 'X' or 'O'")
-        return self.find(move[0], len(move[:-1]), int(move[-1]))
+        if size not in [1, 2, 3]:
+            raise ValueError("Move must end with size 1, 2, or 3")
+        if index not in [0, 1]:
+            raise ValueError("Move must end index 0 or 1")
+        return self.find(player, size, index)
 
     def validate_move(self, gobbler, location):
         if gobbler.player != self.next_player:
@@ -63,10 +62,12 @@ class Board:
         if len(self.state[x][y]) > 0:
             self.state[x][y][0].covered = False
 
-    def play(self, move, location):
-        gobbler = self._parse_move(move)
+    def play(self, player, size, index, location):
+        gobbler = self._parse_move(player, size, index)
         self.validate_move(gobbler, location)
-        move_string = "{}-{}-{}".format(move, location[0], location[1])
+        move_string = "{}-{}-{}-{}-{}".format(
+            player, size, index, location[0], location[1]
+        )
         self.moves.append(move_string)
         self.next_player = "X" if self.next_player == "O" else "O"
         x, y = location
@@ -125,8 +126,8 @@ class Gobbler:
         if index not in [0, 1]:
             raise ValueError("Index must be 0 or 1")
 
-        self.size = size
         self.player = player
+        self.size = size
         self.index = index
         self.location = None
         self.covered = False
@@ -146,8 +147,8 @@ class Gobbler:
     def __eq__(self, other):
         print(self.location, other.location)
         return (
-            self.size == other.size
-            and self.player == other.player
+            self.player == other.player
+            and self.size == other.size
             and self.index == other.index
             and self.location == other.location
         )

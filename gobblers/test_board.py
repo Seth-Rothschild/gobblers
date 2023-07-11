@@ -42,22 +42,22 @@ def test_init_gobbler():
     5. covered is False
     """
     gobbler = Gobbler("X", 1, 0)
-    assert gobbler.size == 1
     assert gobbler.player == "X"
+    assert gobbler.size == 1
     assert gobbler.index == 0
     assert str(gobbler) == "    X    "
     assert gobbler.covered == False
 
     gobbler = Gobbler("O", 2, 0)
-    assert gobbler.size == 2
     assert gobbler.player == "O"
+    assert gobbler.size == 2
     assert gobbler.index == 0
     assert str(gobbler) == "    OO OO"
     assert gobbler.covered == False
 
     gobbler = Gobbler("X", 3, 1)
-    assert gobbler.size == 3
     assert gobbler.player == "X"
+    assert gobbler.size == 3
     assert gobbler.index == 1
     assert str(gobbler) == "XXXXXXXXX"
     assert gobbler.covered == False
@@ -83,22 +83,22 @@ def test_play():
     4. the location is updated on the gobbler that was played
     """
     board = Board()
-    board.play("X0", (0, 0))
+    board.play("X", 1, 0, (0, 0))
 
-    assert board.moves == ["X0-0-0"]
+    assert board.moves == ["X-1-0-0-0"]
     assert board.next_player == "O"
     gobbler = board.find("X", 1, 0)
     assert board.state[0][0] == [gobbler]
     assert gobbler.location == (0, 0)
 
-    board.play("OO1", (1, 0))
-    assert board.moves == ["X0-0-0", "OO1-1-0"]
+    board.play("O", 2, 1, (1, 0))
+    assert board.moves == ["X-1-0-0-0", "O-2-1-1-0"]
     assert board.next_player == "X"
     gobbler = board.find("O", 2, 1)
     assert board.state[1][0] == [gobbler]
 
-    board.play("XXX0", (2, 2))
-    assert board.moves == ["X0-0-0", "OO1-1-0", "XXX0-2-2"]
+    board.play("X", 3, 0, (2, 2))
+    assert board.moves == ["X-1-0-0-0", "O-2-1-1-0", "X-3-0-2-2"]
     assert board.next_player == "O"
     gobbler = board.find("X", 3, 0)
     assert board.state[2][2] == [gobbler]
@@ -112,24 +112,24 @@ def test_validate():
     board = Board()
 
     with pytest.raises(ValueError) as e:
-        board.play("X0", (-1, 0))
+        board.play("X", 1, 0, (-1, 0))
     assert str(e.value) == "Location must be a tuple of 2 integers between 0 and 2"
 
     with pytest.raises(ValueError) as e:
-        board.play("X0", (0, 3))
+        board.play("X", 1, 0, (0, 3))
     assert str(e.value) == "Location must be a tuple of 2 integers between 0 and 2"
 
     with pytest.raises(ValueError) as e:
-        board.play("OO1", (0, 0))
+        board.play("O", 2, 1, (0, 0))
     assert str(e.value) == "It is not O's turn"
 
-    board.play("X0", (0, 0))
+    board.play("X", 1, 0, (0, 0))
     with pytest.raises(ValueError) as e:
-        board.play("O1", (0, 0))
+        board.play("O", 1, 0, (0, 0))
     assert str(e.value) == "0-0 is occupied by a gobbler of the same size"
 
-    board.play("OO1", (0, 0))
-    assert board.moves == ["X0-0-0", "OO1-0-0"]
+    board.play("O", 2, 1, (0, 0))
+    assert board.moves == ["X-1-0-0-0", "O-2-1-0-0"]
 
 
 def test_covering():
@@ -145,27 +145,27 @@ def test_covering():
     """
 
     board = Board()
-    board.play("X0", (0, 0))
+    board.play("X", 1, 0, (0, 0))
     first_gobbler = board.find("X", 1, 0)
-    board.play("OO1", (0, 0))
+    board.play("O", 2, 1, (0, 0))
     second_gobbler = board.find("O", 2, 1)
 
     assert board.state[0][0] == [second_gobbler, first_gobbler]
     assert first_gobbler.covered == True
 
     with pytest.raises(ValueError) as e:
-        board.play("X0", (1, 1))
+        board.play("X", 1, 0, (1, 1))
     assert str(e.value) == "This gobbler is covered and cannot move"
 
     ## burn a move so that it is O's turn
-    board.play("X1", (1, 1))
+    board.play("X", 1, 1, (1, 1))
 
-    board.play("OO1", (1, 1))
+    board.play("O", 2, 1, (1, 1))
 
     assert board.state[0][0] == [first_gobbler]
     assert first_gobbler.covered == False
 
-    board.play("X0", (2, 0))
+    board.play("X", 1, 0, (2, 0))
     assert first_gobbler.location == (2, 0)
 
 
@@ -175,11 +175,11 @@ def test_print():
     2. for each element of state, we show the gobbler in position 0
     """
     board = Board()
-    board.play("X0", (0, 0))
-    board.play("OO0", (0, 0))
-    board.play("XXX0", (1, 1))
-    board.play("O1", (0, 2))
-    board.play("XXX1", (0, 1))
+    board.play("X", 1, 0, (0, 0))
+    board.play("O", 2, 0, (0, 0))
+    board.play("X", 3, 0, (1, 1))
+    board.play("O", 1, 1, (0, 2))
+    board.play("X", 3, 1, (0, 1))
 
     output = board.print()
 
