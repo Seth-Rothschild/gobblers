@@ -32,6 +32,9 @@ class Board:
         if gobbler.covered:
             raise ValueError("This gobbler is covered and cannot move")
 
+        if self.game_over:
+            raise ValueError("The game is over")
+
         x, y = location
         if x not in [0, 1, 2] or y not in [0, 1, 2]:
             raise ValueError("Location must be a tuple of 2 integers between 0 and 2")
@@ -62,6 +65,28 @@ class Board:
         if len(self.state[x][y]) > 0:
             self.state[x][y][0].covered = False
 
+    def _get_visible_gobblers(self):
+        visible = [[None for _ in range(3)] for _ in range(3)]
+        for i, row in enumerate(self.state):
+            for j, gobblers in enumerate(row):
+                if len(gobblers) > 0:
+                    visible[i][j] = gobblers[0].player
+        return visible
+
+    def _check_win(self):
+        visible = self._get_visible_gobblers()
+        rows = visible
+        columns = [[row[i] for row in visible] for i in range(3)]
+        diagonals = [
+            [visible[0][0], visible[1][1], visible[2][2]],
+            [visible[0][2], visible[1][1], visible[2][0]],
+        ]
+
+        for line in rows + columns + diagonals:
+            if line[0] is not None and line[0] == line[1] == line[2]:
+                self.game_over = True
+                self.winner = line[0]
+
     def play(self, player, size, index, location):
         gobbler = self._parse_move(player, size, index)
         self.validate_move(gobbler, location)
@@ -75,6 +100,7 @@ class Board:
         self._check_cover_and_uncover(gobbler, location)
 
         self.state[x][y].insert(0, gobbler)
+        self._check_win()
         gobbler.location = location
 
     def print(self):

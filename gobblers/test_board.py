@@ -200,4 +200,31 @@ def test_print():
 
 
 def test_win():
-    pass
+    """Check both diagonals and one horizontal and one vertical line
+    1. When there are 3 in a row the game is over
+    2. The winner is the player who has 3 visible in a row
+    3. Further moves are not allowed
+    """
+    lines = [
+        [(0, 0), (1, 1), (2, 2)],
+        [(0, 2), (1, 1), (2, 0)],
+        [(0, 0), (1, 0), (2, 0)],
+        [(0, 0), (0, 1), (0, 2)],
+    ]
+    for line in lines:
+        board = Board()
+        board.play("X", 1, 0, line[0])
+        board.play("O", 2, 0, line[0])
+
+        board.play("X", 1, 1, line[1])
+        board.play("O", 2, 1, line[1])
+
+        board.play("X", 2, 0, line[2])
+        board.play("O", 3, 0, line[2])
+
+        assert board.game_over
+        assert board.winner == "O"
+
+        with pytest.raises(ValueError) as e:
+            board.play("X", 3, 0, (2, 1))
+        assert str(e.value) == "The game is over"
