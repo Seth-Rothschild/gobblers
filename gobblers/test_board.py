@@ -132,6 +132,28 @@ def test_validate():
     assert board.moves == ["X-1-0-0-0", "O-2-1-0-0"]
 
 
+def test_prevent_self_loss():
+    """When I play a move:
+    I cannot move a piece that reveals three in a row of the other player
+    """
+    board = Board()
+    # play the first two moves in each row for each player
+    board.play("X", 1, 0, (0, 0))
+    board.play("O", 1, 0, (0, 1))
+    board.play("X", 1, 1, (1, 0))
+    board.play("O", 1, 1, (1, 1))
+
+    # cover the first O move with a larger X
+    board.play("X", 2, 0, (0, 1))
+    # set up a move that would reveal three in a row for O if X moves
+    board.play("O", 2, 0, (2, 1))
+
+    # X cannot move the 2-0 piece from (0, 1) because it would reveal three in a row for O
+    with pytest.raises(ValueError) as e:
+        board.play("X", 2, 0, (2, 2))
+    assert str(e.value) == "This move reveals three in a row"
+
+
 def test_covering():
     """When a piece is covered
     1. it remains in the state at that location

@@ -53,8 +53,8 @@ class Board:
 
         for line in rows + columns + diagonals:
             if line[0] is not None and line[0] == line[1] == line[2]:
-                self.game_over = True
-                self.winner = line[0]
+                return True
+        return False
 
     def find(self, player, size, index):
         for piece in self.pieces:
@@ -87,6 +87,16 @@ class Board:
                     "{}-{} is occupied by a gobbler of the same size".format(x, y)
                 )
 
+        # check if the move reveals three in a row by _check_win with piece removed
+        if gobbler.location is None:
+            return
+        x, y = gobbler.location
+        self.state[x][y].remove(gobbler)
+        is_valid = not self._check_win()
+        self.state[x][y].insert(0, gobbler)
+        if not is_valid:
+            raise ValueError("This move reveals three in a row")
+
     def play(self, player, size, index, location):
         gobbler = self._parse_move(player, size, index)
         self.validate_move(gobbler, location)
@@ -100,7 +110,9 @@ class Board:
         self._check_cover_and_uncover(gobbler, location)
 
         self.state[x][y].insert(0, gobbler)
-        self._check_win()
+        if self._check_win():
+            self.game_over = True
+            self.winner = gobbler.player
         gobbler.location = location
 
     def _reflect_move(self, move, type):
@@ -129,6 +141,37 @@ class Board:
         for move in moves:
             player, size, index, x, y = move.split("-")
             self.play(player, int(size), int(index), (int(x), int(y)))
+
+    def iter_lines(self):
+        """Go through the rows and columns and give useful information about them"""
+
+        indices = [[(i, j) for j in range(3)] for i in range(3)]
+        column_indices = [[(i, j) for i in range(3)] for j in range(3)]
+        diagonals = [
+            [(0, 0), (1, 1), (2, 2)],
+            [(0, 2), (1, 1), (2, 0)],
+        ]
+
+        visible = self._get_visible_gobblers()
+        column_visible = [[row[i] for row in visible] for i in range(3)]
+        diagonal_visible = [
+            [visible[0][0], visible[1][1], visible[2][2]],
+            [visible[0][2], visible[1][1], visible[2][0]],
+        ]
+
+        actual = self.state
+        column_actual = [[row[i] for row in actual] for i in range(3)]
+        diagonal_actual = [
+            [actual[0][0], actual[1][1], actual[2][2]],
+            [actual[0][2], actual[1][1], actual[2][0]],
+        ]
+
+        line_indices = indices + column_indices + diagonals
+        line_visible = visible + column_visible + diagonal_visible
+        line_actual = actual + column_actual + diagonal_actual
+
+        for index, visible, actual in zip(line_indices, line_visible, line_actual):
+            yield (index, visible, actual)
 
     def __str__(self):
         """
