@@ -97,6 +97,13 @@ class Board:
         if not is_valid:
             raise ValueError("This move reveals three in a row")
 
+    def undo(self, number_of_moves=1):
+        moves = self.moves
+        for _ in range(number_of_moves):
+            moves.pop()
+        self.__init__()
+        self.replay(moves)
+
     def play(self, player, size, index, location):
         gobbler = self._parse_move(player, size, index)
         self.validate_move(gobbler, location)
@@ -241,7 +248,6 @@ class Gobbler:
             return "{}{}{}".format(self.player * 3, self.player * 3, self.player * 3)
 
     def __eq__(self, other):
-        print(self.location, other.location)
         return (
             self.player == other.player
             and self.size == other.size
