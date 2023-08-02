@@ -3,6 +3,7 @@ class Board:
         self.state = [[[] for _ in range(3)] for _ in range(3)]
         self.next_player = "X"
         self.game_over = False
+        self.winner = None
         self.moves = []
         self._init_pieces()
 
@@ -33,6 +34,13 @@ class Board:
         self.state[x][y].remove(gobbler)
         if len(self.state[x][y]) > 0:
             self.state[x][y][0].covered = False
+
+    def _check_three_fold(self):
+        """see if the same move has been played three times before"""
+        most_recent = self.moves[-1]
+        if self.moves.count(most_recent) == 3:
+            self.game_over = True
+            self.winner = "Draw"
 
     def _get_visible_gobblers(self):
         visible = [[None for _ in range(3)] for _ in range(3)]
@@ -117,9 +125,12 @@ class Board:
         self._check_cover_and_uncover(gobbler, location)
 
         self.state[x][y].insert(0, gobbler)
+
+        self._check_three_fold()
         if self._check_win():
             self.game_over = True
             self.winner = gobbler.player
+
         gobbler.location = location
 
     def _reflect_move(self, move, type):
@@ -146,6 +157,8 @@ class Board:
     def replay(self, moves):
         self.__init__()
         for move in moves:
+            if self.game_over:
+                break
             player, size, index, x, y = move.split("-")
             self.play(player, int(size), int(index), (int(x), int(y)))
 

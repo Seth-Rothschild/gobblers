@@ -20,8 +20,12 @@ class Agent:
                 try:
                     self.board.validate_move(piece, location)
                     self.board.play(player, piece.size, piece.index, location)
+                    return True
                 except ValueError:
                     continue
+        self.board.winner = "Draw"
+        self.board.game_over = True
+        return False
 
     def check_winning_move(self):
         if self.board.game_over:
@@ -37,6 +41,8 @@ class Agent:
                     possible_winning_location = index
                     for piece in player_pieces:
                         try:
+                            # This isn't quite right, you might be covering your own piece
+                            # in which case you _can_ move it and still win
                             if (
                                 piece.location != None
                                 and piece.location in line_indices
@@ -118,8 +124,14 @@ class Agent:
             return
 
         defended = self.defend()
-        if not defended:
-            self.prefer_new()
+        if defended:
+            return
+
+        play_new = self.prefer_new()
+        if play_new:
+            return
+
+        self.random_play()
 
     def play_out(self):
         for _ in range(50):

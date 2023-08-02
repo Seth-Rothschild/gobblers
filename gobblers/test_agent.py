@@ -79,7 +79,7 @@ def test_defend():
     assert agent.check_winning_move() == False
 
 
-def test_edge_cases():
+def test_avoid_revealing_win_early():
     """Regression test for previously broken cases
     These are games where O moves a piece to enable an X win
 
@@ -110,6 +110,116 @@ def test_edge_cases():
             if board.game_over:
                 count += 1
     assert count == 0
+
+
+def test_always_play_move():
+    """This is a regression game for games that did not finish
+    Because the agent only wanted to play new moves
+    """
+    bad_games = [
+        [
+            "X-3-0-2-1",
+            "O-2-1-1-2",
+            "X-1-0-0-1",
+            "O-2-0-0-1",
+            "X-3-1-1-0",
+            "O-1-0-0-0",
+            "X-2-0-0-0",
+            "O-3-0-0-0",
+            "X-3-0-0-1",
+            "O-1-1-2-0",
+            "X-2-1-2-0",
+            "O-3-1-2-0",
+            "X-1-1-2-1",
+            "O-3-1-2-1",
+        ],
+    ]
+    count = 0
+    for game in bad_games:
+        for _ in range(30):
+            board = Board()
+            board.replay(game)
+            agent = Agent(board)
+            agent.play_out()
+            if not board.game_over:
+                count += 1
+    assert count == 0
+
+
+def test_forced_endgame():
+    """If the only move remaining for a player is self-loss we'll call the game a draw"""
+    bad_games = [
+        [
+            "X-3-0-2-1",
+            "O-3-0-1-1",
+            "X-1-0-0-1",
+            "O-2-0-0-1",
+            "X-3-0-0-1",
+            "O-3-1-1-0",
+            "X-2-0-1-2",
+            "O-2-1-2-1",
+            "X-3-1-1-2",
+            "O-1-1-0-2",
+            "X-2-1-0-2",
+            "O-3-0-0-2",
+            "X-1-1-0-0",
+            "O-2-1-0-0",
+            "X-3-1-0-0",
+            "O-1-0-2-2",
+            "X-3-0-1-2",
+            "O-3-1-2-1",
+            "X-3-0-2-2",
+            "O-3-1-1-2",
+        ]
+    ]
+    for game in bad_games:
+        board = Board()
+        board.replay(game)
+        agent = Agent(board)
+        agent.play()
+        assert board.game_over
+        assert board.winner == "Draw"
+
+
+def test_threefold():
+    """If the game state repeats 3 times, call it a draw"""
+    bad_games = [
+        [
+            "X-1-0-0-0",
+            "O-1-0-1-2",
+            "X-3-1-2-1",
+            "O-2-1-1-1",
+            "X-3-0-1-0",
+            "O-2-0-0-0",
+            "X-3-0-1-1",
+            "O-3-0-0-1",
+            "X-3-1-0-0",
+            "O-3-0-2-2",
+            "X-3-1-0-2",
+            "O-3-0-2-0",
+            "X-3-1-0-0",
+            "O-3-0-2-2",
+            "X-3-1-0-2",
+            "O-3-0-2-0",
+            "X-3-1-0-0",
+            "O-3-0-2-2",
+            "X-3-1-0-2",
+            "O-3-0-2-0",
+            "X-3-1-0-0",
+            "O-3-0-2-2",
+            "X-3-1-0-2",
+            "O-3-0-2-0",
+            "X-3-1-0-0",
+            "O-3-0-2-2",
+            "X-3-1-0-2",
+        ]
+    ]
+    for game in bad_games:
+        board = Board()
+        board.replay(game)
+        agent = Agent(board)
+        agent.play_out()
+        assert len(board.moves) < 50
 
 
 def test_defend_multiple():
